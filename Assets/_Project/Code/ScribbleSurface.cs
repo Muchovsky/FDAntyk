@@ -58,6 +58,13 @@ public class ScribbleSurface : MonoBehaviour
         }
 
         wasMouseDownLastFrame = isMouseDown;
+
+
+        //Debug
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            ClearSurface();
+        }
     }
 
     public void DrawLine(Vector3 worldPosition)
@@ -68,7 +75,7 @@ public class ScribbleSurface : MonoBehaviour
         if (lastDragPosition == Vector2.zero)
             FillPixels(pixelCoords, 3, Color.black);
         else
-            DrawLineSegment(lastDragPosition, pixelCoords, 3, Color.black);
+            DrawLineSegment(lastDragPosition, pixelCoords, 3, Color.green);
 
         lastDragPosition = pixelCoords;
     }
