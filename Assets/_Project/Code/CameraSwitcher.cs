@@ -65,12 +65,15 @@ public class CameraSwitcher : MonoBehaviour
         tableCamera.enabled = true;
     }
 
+
+    #if UNITY_EDITOR
     //DebugOnly
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.Z))
         {
             ToggleCameras();
         }
     }
+    #endif
 }

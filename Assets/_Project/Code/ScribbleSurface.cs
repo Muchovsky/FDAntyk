@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -7,16 +8,17 @@ public class ScribbleSurface : MonoBehaviour
     public Color BackgroundColor = new(0, 0, 0, 0);
 
     public bool ClearTextureOnStart = true;
-    private Sprite surfaceSprite;
-    private Texture2D surfaceTexture;
+    Sprite surfaceSprite;
+    Texture2D surfaceTexture;
 
-    private Vector2 lastDragPosition;
-    private Color[] baseColors;
-    private Color clearColor;
-    private Color32[] currentPixelColors;
-    private bool wasMouseDownLastFrame = false;
-    private bool skipDrawingThisDrag = false;
+    Vector2 lastDragPosition;
+    Color[] baseColors;
+    Color clearColor;
+    Color32[] currentPixelColors;
+    bool wasMouseDownLastFrame = false;
+    bool skipDrawingThisDrag = false;
     [SerializeField] Camera tableCamera;
+
 
     void Start()
     {
@@ -59,19 +61,19 @@ public class ScribbleSurface : MonoBehaviour
 
         wasMouseDownLastFrame = isMouseDown;
 
-
+#if UNITY_EDITOR
         //Debug
         if (Input.GetKeyDown(KeyCode.X))
         {
             ClearSurface();
         }
+#endif
     }
 
-    public void DrawLine(Vector3 worldPosition)
+    void DrawLine(Vector3 worldPosition)
     {
         Vector3 pixelCoords = TransformToPixelCoordinates(worldPosition);
         currentPixelColors = surfaceTexture.GetPixels32();
-
         if (lastDragPosition == Vector2.zero)
             FillPixels(pixelCoords, 3, Color.black);
         else
@@ -80,7 +82,7 @@ public class ScribbleSurface : MonoBehaviour
         lastDragPosition = pixelCoords;
     }
 
-    public void DrawLineSegment(Vector2 startPoint, Vector2 endPoint, int thickness, Color drawColor)
+    void DrawLineSegment(Vector2 startPoint, Vector2 endPoint, int thickness, Color drawColor)
     {
         float segmentLength = Vector2.Distance(startPoint, endPoint);
 
@@ -127,7 +129,7 @@ public class ScribbleSurface : MonoBehaviour
         surfaceTexture.Apply();
     }
 
-    public void FillPixels(Vector2 center, int radius, Color color)
+    void FillPixels(Vector2 center, int radius, Color color)
     {
         int centerX = (int)center.x;
         int centerY = (int)center.y;
