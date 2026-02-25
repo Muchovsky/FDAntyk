@@ -1,13 +1,10 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraSwitcher : MonoBehaviour
 {
-    public Camera mainCamera;
-    public Camera tableCamera;
-    public TableViewEvents tableViewEvents;
+    [SerializeField] Camera mainCamera;
+    [SerializeField]  Camera tableCamera;
+    [SerializeField]  TableViewEvents tableViewEvents;
 
     void OnEnable()
     {

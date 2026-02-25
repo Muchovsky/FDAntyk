@@ -1,20 +1,40 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CoolLampEffect : MonoBehaviour {
-	public Color _color1 = Color.red;
-	public Color _color2 = Color.yellow;
-	[SerializeField] private List<Light> Lights;
+public class CoolLampEffect : MonoBehaviour
+{
+    [SerializeField] Color color1 = Color.red;
+    [SerializeField] Color color2 = Color.yellow;
+    [SerializeField] List<Light> Lights;
+    [SerializeField] int materialIndex = 1;
+    [SerializeField] float speed = 1f;
 
-	private void FixedUpdate() {
-		float lerpFactor = Mathf.PingPong(Time.time * 1, 1.0f);
-		if (GetComponent<MeshRenderer>().material != null) {
-			GetComponent<Renderer>().materials[1] = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-			GetComponent<Renderer>().materials[1].color = Color.Lerp(_color1, _color2, lerpFactor);
-		}
+    Renderer renderer;
+    Material materialInstance;
+    static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
-		foreach (var light1 in Lights) {
-			light1.color = Color.Lerp(_color1, _color2, lerpFactor);
-		}
-	}
+    void Start()
+    {
+        renderer = GetComponent<Renderer>();
+
+        if (renderer.materials.Length <= materialIndex)
+        {
+            Debug.LogError("Material index out of range.");
+            enabled = false;
+            return;
+        }
+        materialInstance = renderer.materials[materialIndex];
+    }
+
+    void Update()
+    {
+        float lerpFactor = Mathf.PingPong(Time.time * speed, 1.0f);
+        Color currentColor = Color.Lerp(color1, color2, lerpFactor);
+        materialInstance.SetColor(BaseColorId, currentColor);
+        for (int i = 0; i < Lights.Count; i++)
+        {
+            if (Lights[i] != null)
+                Lights[i].color = currentColor;
+        }
+    }
 }

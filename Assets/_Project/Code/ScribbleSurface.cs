@@ -1,30 +1,25 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class ScribbleSurface : MonoBehaviour
 {
-    public LayerMask InteractionLayer;
-    public Color BackgroundColor = new(0, 0, 0, 0);
-
-    public bool ClearTextureOnStart = true;
+    [SerializeField] Camera tableCamera;
+    [SerializeField] LayerMask InteractionLayer;
+    [SerializeField] Color BackgroundColor = new(0, 0, 0, 0);
+    [SerializeField] bool ClearTextureOnStart = true;
     Sprite surfaceSprite;
     Texture2D surfaceTexture;
 
     Vector2 lastDragPosition;
     Color[] baseColors;
-    Color clearColor;
     Color32[] currentPixelColors;
     bool wasMouseDownLastFrame = false;
     bool skipDrawingThisDrag = false;
-    [SerializeField] Camera tableCamera;
-
+    bool isInteractable = false;
 
     void Start()
     {
         surfaceSprite = GetComponent<SpriteRenderer>().sprite;
         surfaceTexture = surfaceSprite.texture;
-
         baseColors = new Color[(int)surfaceSprite.rect.width * (int)surfaceSprite.rect.height];
         for (int i = 0; i < baseColors.Length; i++)
             baseColors[i] = BackgroundColor;
@@ -35,6 +30,9 @@ public class ScribbleSurface : MonoBehaviour
 
     void Update()
     {
+        if (!isInteractable)
+            return;
+
         bool isMouseDown = Input.GetMouseButton(0);
         if (isMouseDown && !skipDrawingThisDrag)
         {
@@ -43,6 +41,8 @@ public class ScribbleSurface : MonoBehaviour
             if (Physics.Raycast(mouseRay, out RaycastHit hitInfo, Mathf.Infinity, InteractionLayer.value))
             {
                 DrawLine(hitInfo.point);
+                surfaceTexture.SetPixels32(currentPixelColors);
+                surfaceTexture.Apply(false);
             }
             else
             {
@@ -70,6 +70,11 @@ public class ScribbleSurface : MonoBehaviour
 #endif
     }
 
+    public void SetIsInteractable(bool status)
+    {
+        isInteractable = status;
+    }
+
     void DrawLine(Vector3 worldPosition)
     {
         Vector3 pixelCoords = TransformToPixelCoordinates(worldPosition);
@@ -77,26 +82,25 @@ public class ScribbleSurface : MonoBehaviour
         if (lastDragPosition == Vector2.zero)
             FillPixels(pixelCoords, 3, Color.black);
         else
-            DrawLineSegment(lastDragPosition, pixelCoords, 3, Color.green);
+            DrawLineSegment(lastDragPosition, pixelCoords, 5, Color.black);
 
         lastDragPosition = pixelCoords;
     }
 
     void DrawLineSegment(Vector2 startPoint, Vector2 endPoint, int thickness, Color drawColor)
     {
-        float segmentLength = Vector2.Distance(startPoint, endPoint);
+        float distance = Vector2.Distance(startPoint, endPoint);
+        int steps = Mathf.CeilToInt(distance);
 
-        Vector2 interpolatedPosition = startPoint;
-        float interpolationSteps = 1 / segmentLength;
-
-        for (float t = 0; t <= 1; t += interpolationSteps)
+        for (int i = 0; i <= steps; i++)
         {
-            interpolatedPosition = Vector2.Lerp(startPoint, endPoint, t);
-            FillPixels(interpolatedPosition, thickness, drawColor);
+            float t = i / (float)steps;
+            Vector2 point = Vector2.Lerp(startPoint, endPoint, t);
+            FillPixels(point, thickness, drawColor);
         }
     }
 
-    public void PreparePixels(Vector2 center, int radius, Color color)
+    void PreparePixels(Vector2 center, int radius, Color color)
     {
         int centerX = (int)center.x;
         int centerY = (int)center.y;
@@ -113,7 +117,7 @@ public class ScribbleSurface : MonoBehaviour
         }
     }
 
-    public void MarkPixelForUpdate(int x, int y, Color color)
+    void MarkPixelForUpdate(int x, int y, Color color)
     {
         int pixelIndex = y * (int)surfaceSprite.rect.width + x;
 
@@ -129,23 +133,29 @@ public class ScribbleSurface : MonoBehaviour
         surfaceTexture.Apply();
     }
 
-    void FillPixels(Vector2 center, int radius, Color color)
+    void FillPixels(Vector2 center, int radius, Color32 color)
     {
+        int width = (int)surfaceSprite.rect.width;
+        int height = (int)surfaceSprite.rect.height;
+
         int centerX = (int)center.x;
         int centerY = (int)center.y;
 
         for (int x = centerX - radius; x <= centerX + radius; x++)
         {
+            if (x < 0 || x >= width) continue;
+
             for (int y = centerY - radius; y <= centerY + radius; y++)
             {
-                surfaceTexture.SetPixel(x, y, color);
+                if (y < 0 || y >= height) continue;
+
+                int index = y * width + x;
+                currentPixelColors[index] = color;
             }
         }
-
-        surfaceTexture.Apply();
     }
 
-    public Vector3 TransformToPixelCoordinates(Vector3 worldPosition)
+    Vector3 TransformToPixelCoordinates(Vector3 worldPosition)
     {
         Vector3 localPosition = transform.InverseTransformPoint(worldPosition);
 
@@ -161,7 +171,7 @@ public class ScribbleSurface : MonoBehaviour
         return pixelCoords;
     }
 
-    public void ClearSurface()
+    void ClearSurface()
     {
         surfaceTexture.SetPixels(baseColors);
         surfaceTexture.Apply();

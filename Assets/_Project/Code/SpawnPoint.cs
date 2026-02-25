@@ -1,25 +1,28 @@
 using UnityEngine;
 
-public class SpawnPoint : MonoBehaviour {
-	public GameObject playerPrefab;
-	GameObject player;
-	static SpawnPoint instance;
+public class SpawnPoint : MonoBehaviour
+{
+    [SerializeField] GameObject playerPrefab;
+    GameObject player;
 
-	void Awake() {
-		if (instance == null)
-			instance = this;
-		player = Instantiate(playerPrefab);
-		ResetPlayerPosition();
-		player.name = "Player";
-		gameObject.SetActive(false);
-	}
+    void Awake()
+    {
+        if (playerPrefab == null)
+        {
+            Debug.LogError("Player prefab not assigned");
+            return;
+        }
 
-	public static void ResetPlayerPosition() {
-		if (instance == null) {
-			Debug.LogError("No spawn point");
-			return;
-		}
+        player = Instantiate(playerPrefab);
+        ResetPlayerPosition();
+        player.name = "Player";
+    }
 
-		instance.player.transform.position = instance.transform.position;
-	}
+    void ResetPlayerPosition()
+    {
+        player.transform.SetPositionAndRotation(
+            transform.position,
+            transform.rotation
+        );
+    }
 }
